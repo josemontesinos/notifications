@@ -1,0 +1,5 @@
+# IDE directories
+.idea/
+
+# Virtual environment
+venv/
