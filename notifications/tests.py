@@ -2,7 +2,7 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from notifications import User
+from notifications import User, Message
 
 
 logging.disable(logging.CRITICAL)
@@ -82,6 +82,68 @@ class UserTestCase(TestCase):
         self.assertEqual(len(user.get_unread_messages()), 0)
 
 
+class MessageTestCase(TestCase):
+
+    body = 'This is the body of this message'
+    code = 1
+
+    def test_message_creation(self):
+        message = Message(body=self.body, code=self.code)
+        self.assertEqual(message.body, self.body)
+        self.assertEqual(message.code, self.code)
+        self.assertEqual(message.users_sent, set())
+        self.assertEqual(message.users_received, set())
+        self.assertEqual(message.users_read, set())
+
+    def test_message_representation(self):
+        message = Message(body=self.body, code=self.code)
+        for func in repr, str:
+            self.assertEqual(func(message), message.body)
+
+    def test_message_body_type_validation(self):
+        wrong_body = 1234
+        with self.assertRaises(TypeError):
+            Message(body=wrong_body, code=self.code)
+
+    def test_message_code_type_validation(self):
+        wrong_code = '1'
+        with self.assertRaises(TypeError):
+            User(name=self.body, code=wrong_code)
+
+    def test_message_code_value_validation(self):
+        wrong_code = -1
+        with self.assertRaises(ValueError):
+            User(name=self.body, code=wrong_code)
+
+    def test_send_message(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        self.assertEqual(len(message.users_sent), 0)
+        self.assertFalse(message.is_sent(user=user))
+        message.send(user=user)
+        self.assertEqual(len(message.users_sent), 1)
+        self.assertTrue(message.is_sent(user=user))
+        self.assertIn(user, message.users_sent)
+
+    def test_mark_message_as_received(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        self.assertEqual(len(message.users_received), 0)
+        self.assertFalse(message.is_received(user=user))
+        message.mark_as_received(user=user)
+        self.assertEqual(len(message.users_received), 1)
+        self.assertTrue(message.is_received(user=user))
+        self.assertIn(user, message.users_received)
+
+    def test_mark_message_as_read(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        self.assertEqual(len(message.users_read), 0)
+        self.assertFalse(message.is_read(user=user))
+        message.mark_as_read(user=user)
+        self.assertEqual(len(message.users_read), 1)
+        self.assertTrue(message.is_read(user=user))
+        self.assertIn(user, message.users_read)
 
 
 
