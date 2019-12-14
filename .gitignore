@@ -1,5 +1,6 @@
 # IDE directories
 .idea/
-
 # Virtual environment
 venv/
+# .pyc files
+*.pyc
