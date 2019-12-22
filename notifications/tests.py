@@ -2,7 +2,7 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from notifications import User, Message, names
+from notifications import User, Message, names as names_module, text as text_module
 
 
 logging.disable(logging.CRITICAL)
@@ -149,10 +149,24 @@ class MessageTestCase(TestCase):
 class NamesTestCase(TestCase):
 
     def test_random_name_generation(self):
-        name = names.get_random_name()
+        name = names_module.get_random_name()
         self.assertIsInstance(name, str)
         self.assertTrue(name.istitle())
         self.assertEqual(len(name.split()), 2)
         first_name, surname = name.split()
-        self.assertIn(first_name, names.NAMES)
-        self.assertIn(surname, names.SURNAMES)
+        self.assertIn(first_name, names_module.NAMES)
+        self.assertIn(surname, names_module.SURNAMES)
+
+
+class TextTestCase(TestCase):
+
+    def test_random_text_generation(self):
+        for num_words in (1, 10, 100):
+            text = text_module.get_random_text(num_words=num_words)
+            self.assertIsInstance(text, str)
+            self.assertEqual(len(text.split()), num_words)
+            self.assertTrue(text[0].isupper())
+            self.assertTrue(text[1:].islower())
+            self.assertTrue(text.endswith('.'))
+
+
