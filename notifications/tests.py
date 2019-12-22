@@ -2,7 +2,7 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from notifications import User, Message
+from notifications import User, Message, names
 
 
 logging.disable(logging.CRITICAL)
@@ -146,5 +146,13 @@ class MessageTestCase(TestCase):
         self.assertIn(user, message.users_read)
 
 
+class NamesTestCase(TestCase):
 
-
+    def test_random_name_generation(self):
+        name = names.get_random_name()
+        self.assertIsInstance(name, str)
+        self.assertTrue(name.istitle())
+        self.assertEqual(len(name.split()), 2)
+        first_name, surname = name.split()
+        self.assertIn(first_name, names.NAMES)
+        self.assertIn(surname, names.SURNAMES)
