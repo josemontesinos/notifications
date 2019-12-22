@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class Message(object):
     """
-    Message class. Each message has a text string as a body, a list of users to whom it has been sent,
+    Message class. Each message has a text string as a body, a numeric code, a list of users to whom it has been sent,
     a list of users who received the message and a list of users that have opened and read it.
     """
     _body = ''
@@ -18,8 +18,9 @@ class Message(object):
     def __init__(self, body, code):
         """
         :param body: Text body of the message.
-        :param body: Text body of the message.
         :type body: str
+        :param code: Numeric ID of the message.
+        :type code: int
         """
         self.body = body
         self.code = code
@@ -104,7 +105,7 @@ class Message(object):
         :type user: User
         """
         self._sent.add(user)
-        logger.debug(f'Message {self.code} sent to user {user}.')
+        logger.debug(f'Message "{self}" sent to user {user}.')
 
     def is_sent(self, user):
         """
@@ -123,7 +124,7 @@ class Message(object):
         :type user: User
         """
         self._received.add(user)
-        logger.debug(f'Message {self.code} marked as received by user {user}.')
+        logger.debug(f'Message "{self}" marked as received by user {user}.')
 
     def is_received(self, user):
         """
@@ -142,7 +143,7 @@ class Message(object):
         :type user: User
         """
         self._read.add(user)
-        logger.debug(f'Message {self.code} marked as read by user {user}.')
+        logger.debug(f'Message "{self}" marked as read by user {user}.')
 
     def is_read(self, user):
         """

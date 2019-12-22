@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class User(object):
     """
-    User class. Each user has a name, a code and an inbox with messages they have received.
+    User class. Each user has a name, a numeric code and an inbox with messages they have received.
     """
     _name = None
     _code = None
@@ -67,9 +67,9 @@ class User(object):
     @property
     def inbox(self):
         """
-        Getter method for the user's inbox
-        :return: This user's inbox
-        :rtype: set
+        Getter method for the user's inbox.
+        :return: This user's inbox.
+        :rtype: list
         """
         return self._inbox
 
@@ -82,9 +82,9 @@ class User(object):
         if message not in self._inbox:
             self._inbox.append(message)
             message.mark_as_received(user=self)
-            logger.debug(f'User {self} received a new message: {message}')
+            logger.debug(f'User {self} received a new message: "{message}"')
         else:
-            logger.warning(f'User {self} received a repeated message: {message}.')
+            logger.warning(f'User {self} received a repeated message: "{message}".')
 
     def read_message(self, message):
         """

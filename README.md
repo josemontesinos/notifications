@@ -2,8 +2,8 @@
 
 ## Specifications
 The objective of this exercise is to develop a simulator for delivering notifications to users. The simulator will allow 
-you to define an environment with several users towhom notifications can be delivered, and each of these notifications 
-will have aseries of statistics related to the messages sent, received and open.
+you to define an environment with several users to whom notifications can be delivered, and each of these notifications 
+will have a series of statistics related to the messages sent, received and open.
 
 * **User** registration:
     * Each user will have a name, which will be used for its representation. 
