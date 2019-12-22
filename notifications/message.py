@@ -155,6 +155,14 @@ class Message(object):
         """
         return user in self._read
 
+    def get_statistics(self):
+        """
+        Retrieve statistics about the number of times this message has been sent, received and read.
+        :return: Number of times this message has been sent, received and read.
+        :rtype: tuple
+        """
+        return len(self.users_sent), len(self.users_received), len(self.users_read)
+
     def __repr__(self):
         """
         Representation method.

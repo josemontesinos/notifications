@@ -2,7 +2,8 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from notifications import User, Message, names as names_module, text as text_module
+import notifications
+from notifications import User, Message, DeliverySystem, names as names_module, text as text_module
 
 
 logging.disable(logging.CRITICAL)
@@ -170,3 +171,163 @@ class TextTestCase(TestCase):
             self.assertTrue(text.endswith('.'))
 
 
+class DeliverySystemTestCase(TestCase):
+
+    loss_chance = 0
+    read_chance = 1
+
+    def setUp(self):
+        self.ds = DeliverySystem(loss_chance=self.loss_chance, read_chance=self.read_chance)
+
+    def test_delivery_system_creation(self):
+        ds = DeliverySystem(loss_chance=self.loss_chance, read_chance=self.read_chance)
+        self.assertEqual(ds._loss_chance, self.loss_chance)
+        self.assertEqual(ds._read_chance, self.read_chance)
+        self.assertIsInstance(ds._users, set)
+        self.assertEqual(len(ds._users), 0)
+        self.assertIsInstance(ds._messages, set)
+        self.assertEqual(len(ds._messages), 0)
+
+    def test_default_chances(self):
+        ds = DeliverySystem()
+        self.assertEqual(ds.loss_chance, notifications.delivery.LOSS_CHANCE)
+        self.assertEqual(ds.read_chance, notifications.delivery.READ_CHANCE)
+
+    def test_chances_type_validation(self):
+        for arguments in (
+            {'loss_chance': None},
+            {'read_chance': None},
+            {'loss_chance': 'wrong'},
+            {'read_chance': 'wrong'},
+        ):
+            with self.assertRaises(TypeError):
+                DeliverySystem(**arguments)
+
+    def test_chances_value_validation(self):
+        for arguments in (
+            {'loss_chance': -1},
+            {'read_chance': -1},
+            {'loss_chance': 1.1},
+            {'read_chance': 1.1},
+            {'loss_chance': 2},
+            {'read_chance': 2},
+        ):
+            with self.assertRaises(ValueError):
+                DeliverySystem(**arguments)
+
+    def test_register_user(self):
+        username = 'John Doe'
+        self.assertEqual(len(self.ds.users), 0)
+        user = self.ds.register_user(name=username)
+        self.assertEqual(len(self.ds.users), 1)
+        self.assertEqual(self.ds._user_count, 1)
+        self.assertIn(user, self.ds.users)
+        self.assertEqual(user.name, username)
+        self.assertEqual(user.code, 1)
+
+    def test_create_message(self):
+        message_body = 'This is a message.'
+        self.assertEqual(len(self.ds.messages), 0)
+        message = self.ds.create_message(body=message_body)
+        self.assertEqual(len(self.ds.messages), 1)
+        self.assertEqual(self.ds._message_count, 1)
+        self.assertIn(message, self.ds.messages)
+        self.assertEqual(message.body, message_body)
+        self.assertEqual(message.code, 1)
+
+    def test_get_user_and_message_code(self):
+        control_series = list(range(1, 11))
+        for code_generator in (self.ds._get_user_code, self.ds._get_message_code):
+            series = list(code_generator() for _ in range(10))
+            self.assertEqual(series, control_series)
+
+    def test_is_registered_user(self):
+        registered_user = self.ds.register_user(name='John Smith')
+        self.assertTrue(self.ds.is_registered_user(user=registered_user))
+        unregistered_user = User(name='Jane Doe', code=registered_user.code + 1)
+        self.assertFalse(self.ds.is_registered_user(user=unregistered_user))
+
+    def test_is_registered_message(self):
+        registered_message = self.ds.create_message(body='This message is registered')
+        self.assertTrue(self.ds.is_registered_message(message=registered_message))
+        unregistered_message = Message(body='This message is not registered', code=registered_message.code + 1)
+        self.assertFalse(self.ds.is_registered_message(message=unregistered_message))
+
+    def test_send_message(self):
+        user = self.ds.register_user(name='John Doe')
+        message = self.ds.create_message(body='This is a message')
+        for iterable in (message.users_sent, message.users_received, message.users_read, user.inbox):
+            self.assertEqual(len(iterable), 0)
+        self.ds.send_message(user=user, message=message)
+        for iterable in (message.users_sent, message.users_received, message.users_read, user.inbox):
+            self.assertEqual(len(iterable), 1)
+        for iterable in (message.users_sent, message.users_received, message.users_read):
+            self.assertIn(user, iterable)
+        self.assertIn(message, user.inbox)
+
+    def test_send_message_creation(self):
+        user = self.ds.register_user(name='John Doe')
+        self.assertEqual(len(self.ds.messages), 0)
+        self.ds.send_message(user=user)
+        self.assertEqual(len(self.ds.messages), 1)
+        self.assertEqual(len(user.inbox), 1)
+
+    def test_send_message_user_validation(self):
+        user = User(name='John Doe', code=1)
+        self.assertNotIn(user, self.ds.users)
+        with self.assertRaises(ValueError):
+            self.ds.send_message(user=user, body='This should raise and exception.')
+
+    def test_send_message_validation(self):
+        user = self.ds.register_user()
+        message = Message(body='This message is not registered.', code=1)
+        with self.assertRaises(ValueError):
+            self.ds.send_message(user=user, message=message)
+
+    def test_broadcast_message(self):
+        users = (
+            self.ds.register_user(),
+            self.ds.register_user(),
+            self.ds.register_user()
+        )
+        self.assertEqual(len(self.ds.users), len(users))
+        message = self.ds.broadcast_message(body='This message will be sent to every user.')
+        for user in users:
+            self.assertIn(message, user.inbox)
+
+    def test_broadcast_message_creation(self):
+        user = self.ds.register_user()
+        self.assertEqual(len(self.ds.messages), 0)
+        self.ds.broadcast_message()
+        self.assertEqual(len(self.ds.messages), 1)
+        self.assertEqual(len(user.inbox), 1)
+
+    def test_broadcast_message_validation(self):
+        self.ds.register_user()
+        message = Message(body='This message is not registered.', code=1)
+        with self.assertRaises(ValueError):
+            self.ds.broadcast_message(message=message)
+
+    def test_loss_chance(self):
+        users = [self.ds.register_user() for _ in range(1000)]
+        self.assertEqual(len(self.ds.users), len(users))
+        self.ds.loss_chance = 0
+        message = self.ds.broadcast_message()
+        self.assertEqual(len(message.users_sent), len(message.users_received))
+        self.ds.loss_chance = 1
+        message = self.ds.broadcast_message()
+        self.assertEqual(len(message.users_sent), len(users))
+        self.assertEqual(len(message.users_received), 0)
+
+    def test_read_chance(self):
+        users = [self.ds.register_user() for _ in range(1000)]
+        self.assertEqual(len(self.ds.users), len(users))
+        self.ds.loss_chance = 0
+        self.ds.read_chance = 1
+        message = self.ds.broadcast_message()
+        self.assertEqual(len(message.users_sent), len(message.users_read))
+        self.ds.read_chance = 0
+        message = self.ds.broadcast_message()
+        self.assertEqual(len(message.users_sent), len(users))
+        self.assertEqual(len(message.users_received), len(users))
+        self.assertEqual(len(message.users_read), 0)
