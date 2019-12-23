@@ -1,0 +1,12 @@
+# IDE directories
+.idea/
+
+# Virtual environments
+env/
+venv/
+
+# .pyc files
+*.pyc
+
+# Log files
+*.log
