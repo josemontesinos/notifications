@@ -2,8 +2,11 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-import notifications
-from notifications import User, Message, DeliverySystem, names as names_module, text as text_module
+from user import User
+from message import Message
+from delivery import DeliverySystem, LOSS_CHANCE, READ_CHANCE
+import names as names_module
+import text as text_module
 
 
 logging.disable(logging.CRITICAL)
@@ -190,8 +193,8 @@ class DeliverySystemTestCase(TestCase):
 
     def test_default_chances(self):
         ds = DeliverySystem()
-        self.assertEqual(ds.loss_chance, notifications.delivery.LOSS_CHANCE)
-        self.assertEqual(ds.read_chance, notifications.delivery.READ_CHANCE)
+        self.assertEqual(ds.loss_chance, LOSS_CHANCE)
+        self.assertEqual(ds.read_chance, READ_CHANCE)
 
     def test_chances_type_validation(self):
         for arguments in (

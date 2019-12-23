@@ -1,10 +1,10 @@
 import logging
 import random
 
-from notifications.user import User
-from notifications.message import Message
-from notifications.names import get_random_name
-from notifications.text import get_random_text
+from user import User
+from message import Message
+from names import get_random_name
+from text import get_random_text
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +187,7 @@ class DeliverySystem(object):
         :param display_func: function used to display the statistics.
         :type display_func: function
         """
+        display_func('-------------------------------')
         display_func('DELIVERY SYSTEM STATISTICS')
         display_func('-------------------------------')
         display_func(f'USERS: {self._user_count} unique users registered.')
