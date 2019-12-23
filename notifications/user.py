@@ -1,5 +1,7 @@
 import logging
 
+from decorators import sort_by_code
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +22,7 @@ class User(object):
         """
         self.name = name
         self.code = code
-        self._inbox = []
+        self._inbox = set()
 
     @property
     def name(self):
@@ -65,10 +67,11 @@ class User(object):
         self._code = code
 
     @property
+    @sort_by_code(reverse=True)
     def inbox(self):
         """
         Getter method for the user's inbox.
-        :return: This user's inbox.
+        :return: This user's inbox ordered by message code in descending order.
         :rtype: list
         """
         return self._inbox
@@ -80,7 +83,7 @@ class User(object):
         :type: Message
         """
         if message not in self._inbox:
-            self._inbox.append(message)
+            self._inbox.add(message)
             message.mark_as_received(user=self)
             logger.debug(f'User {self} received a new message: "{message}"')
         else:
@@ -98,22 +101,24 @@ class User(object):
         except StopIteration:
             raise ValueError(f'User {self} cannot read this message because it is not in their inbox.')
 
+    @sort_by_code(reverse=True)
     def get_read_messages(self):
         """
         Retrieve all read messages from the user's inbox.
-        :return: All messages this user has read.
+        :return: All messages this user has read ordered by their code in descending order.
         :rtype: list
         """
-        read_messages = list(filter(lambda x: x.is_read(user=self), self._inbox))
+        read_messages = filter(lambda x: x.is_read(user=self), self._inbox)
         return read_messages
 
+    @sort_by_code(reverse=True)
     def get_unread_messages(self):
         """
         Retrieve all unread messages from the user's inbox.
-        :return: All messages this user has not read yet.
+        :return: All messages this user has not read yet, ordered by their code in descending order.
         :rtype: list
         """
-        unread_messages = list(filter(lambda x: not x.is_read(user=self), self._inbox))
+        unread_messages = filter(lambda x: not x.is_read(user=self), self._inbox)
         return unread_messages
 
     def __repr__(self):

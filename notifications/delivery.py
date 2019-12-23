@@ -5,6 +5,7 @@ from user import User
 from message import Message
 from names import get_random_name
 from text import get_random_text
+from decorators import sort_by_code
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +36,24 @@ class DeliverySystem(object):
 
     @property
     def loss_chance(self):
+        """
+        Getter method for the loss chance.
+        :return: Loss chance.
+        :rtype: float
+        """
         return self._loss_chance
 
     @loss_chance.setter
     def loss_chance(self, loss_chance):
+        """
+        Setter method for the message loss chance that validates it before assignation.
+        :param loss_chance: Value in the range [0-1] representing the chance that a sent message will not be received.
+        :type loss_chance: float
+        """
         if not isinstance(loss_chance, (int, float)):
             raise TypeError('Loss chance must be a number.')
         if loss_chance < 0 or loss_chance > 1:
-            raise ValueError('Loss chance must me in range [0, 1].')
+            raise ValueError('Loss chance must be in range [0-1].')
         self._loss_chance = loss_chance
 
     @property
@@ -51,29 +62,36 @@ class DeliverySystem(object):
 
     @read_chance.setter
     def read_chance(self, read_chance):
+        """
+        Setter method for the message read chance that validates it before assignation.
+        :param read_chance: Value in the range [0-1] representing the chance that a received message will be read.
+        :type read_chance: float
+        """
         if not isinstance(read_chance, (int, float)):
             raise TypeError('Read chance must be a number.')
         if read_chance < 0 or read_chance > 1:
-            raise ValueError('Read chance must me in range [0, 1].')
+            raise ValueError('Read chance must ne in range [0-1].')
         self._read_chance = read_chance
 
     @property
+    @sort_by_code()
     def messages(self):
         """
         Getter method to retrieve the created messages.
         :return: List of messages, ordered by their code.
         :rtype: list
         """
-        return sorted(self._messages, key=lambda x: x.code)
+        return self._messages
 
     @property
+    @sort_by_code()
     def users(self):
         """
         Getter method to retrieve the registered users.
         :return: List of users, ordered by their code.
         :rtype: list
         """
-        return sorted(self._users, key=lambda x: x.code)
+        return self._users
 
     def _get_user_code(self):
         """
