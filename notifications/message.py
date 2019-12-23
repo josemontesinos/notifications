@@ -1,5 +1,7 @@
 import logging
 
+from decorators import sort_by_code
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,29 +73,32 @@ class Message(object):
         self._code = code
 
     @property
+    @sort_by_code()
     def users_sent(self):
         """
         Getter method for the set of users that this message was sent to.
         :return: Users to whom this message was sent.
-        :rtype: set
+        :rtype: list
         """
         return self._sent
 
     @property
+    @sort_by_code()
     def users_received(self):
         """
         Getter method for the set of users that received this message.
         :return: Users who received this message.
-        :rtype: set
+        :rtype: list
         """
         return self._received
 
     @property
+    @sort_by_code()
     def users_read(self):
         """
         Getter method for the set of users that read this message.
         :return: Users who read this message.
-        :rtype: set
+        :rtype: list
         """
         return self._read
 

@@ -12,6 +12,17 @@ import text as text_module
 logging.disable(logging.CRITICAL)
 
 
+def get_mocks_with_code():
+    users = (
+        MagicMock(),
+        MagicMock(),
+        MagicMock()
+    )
+    for index in range(len(users)):
+        users[index].code = index
+    return users
+
+
 class UserTestCase(TestCase):
 
     name = 'José Montesinos Navarro'
@@ -85,6 +96,13 @@ class UserTestCase(TestCase):
         self.assertEqual(len(user.get_read_messages()), 1)
         self.assertEqual(len(user.get_unread_messages()), 0)
 
+    def test_inbox_property(self):
+        messages = get_mocks_with_code()
+        user = User(name=self.name, code=self.code)
+        for message in messages:
+            user.receive_message(message=message)
+        self.assertEqual(user.inbox, list(reversed(messages)))
+
 
 class MessageTestCase(TestCase):
 
@@ -95,9 +113,12 @@ class MessageTestCase(TestCase):
         message = Message(body=self.body, code=self.code)
         self.assertEqual(message.body, self.body)
         self.assertEqual(message.code, self.code)
-        self.assertEqual(message.users_sent, set())
-        self.assertEqual(message.users_received, set())
-        self.assertEqual(message.users_read, set())
+        self.assertEqual(message._sent, set())
+        self.assertEqual(message._received, set())
+        self.assertEqual(message._read, set())
+        self.assertEqual(message.users_sent, [])
+        self.assertEqual(message.users_received, [])
+        self.assertEqual(message.users_read, [])
 
     def test_message_representation(self):
         message = Message(body=self.body, code=self.code)
@@ -148,6 +169,48 @@ class MessageTestCase(TestCase):
         self.assertEqual(len(message.users_read), 1)
         self.assertTrue(message.is_read(user=user))
         self.assertIn(user, message.users_read)
+
+    def test_users_sent_property(self):
+        users = get_mocks_with_code()
+        message = Message(body=self.body, code=self.code)
+        for user in users:
+            message.send(user=user)
+        self.assertEqual(message.users_sent, list(users))
+
+    def test_users_received_property(self):
+        users = get_mocks_with_code()
+        message = Message(body=self.body, code=self.code)
+        for user in users:
+            message.mark_as_received(user=user)
+        self.assertEqual(message.users_received, list(users))
+
+    def test_users_read_property(self):
+        users = get_mocks_with_code()
+        message = Message(body=self.body, code=self.code)
+        for user in users:
+            message.mark_as_read(user=user)
+        self.assertEqual(message.users_read, list(users))
+
+    def test_send_with_repeated_user(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        message.send(user=user)
+        message.send(user=user)
+        self.assertEqual(len(message.users_sent), 1)
+
+    def test_mark_as_received_with_repeated_user(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        message.mark_as_received(user=user)
+        message.mark_as_received(user=user)
+        self.assertEqual(len(message.users_received), 1)
+
+    def test_mark_as_read_with_repeated_user(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        message.mark_as_read(user=user)
+        message.mark_as_read(user=user)
+        self.assertEqual(len(message.users_read), 1)
 
 
 class NamesTestCase(TestCase):
@@ -243,6 +306,22 @@ class DeliverySystemTestCase(TestCase):
         for code_generator in (self.ds._get_user_code, self.ds._get_message_code):
             series = list(code_generator() for _ in range(10))
             self.assertEqual(series, control_series)
+
+    def test_users_property(self):
+        users = (
+            self.ds.register_user(),
+            self.ds.register_user(),
+            self.ds.register_user()
+        )
+        self.assertEqual(self.ds.users, list(users))
+
+    def test_messages_property(self):
+        messages = (
+            self.ds.create_message(),
+            self.ds.create_message(),
+            self.ds.create_message()
+        )
+        self.assertEqual(self.ds.messages, list(messages))
 
     def test_is_registered_user(self):
         registered_user = self.ds.register_user(name='John Smith')

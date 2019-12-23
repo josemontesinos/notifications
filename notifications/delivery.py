@@ -5,6 +5,7 @@ from user import User
 from message import Message
 from names import get_random_name
 from text import get_random_text
+from decorators import sort_by_code
 
 logger = logging.getLogger(__name__)
 
@@ -73,22 +74,24 @@ class DeliverySystem(object):
         self._read_chance = read_chance
 
     @property
+    @sort_by_code()
     def messages(self):
         """
         Getter method to retrieve the created messages.
         :return: List of messages, ordered by their code.
         :rtype: list
         """
-        return sorted(self._messages, key=lambda x: x.code)
+        return self._messages
 
     @property
+    @sort_by_code()
     def users(self):
         """
         Getter method to retrieve the registered users.
         :return: List of users, ordered by their code.
         :rtype: list
         """
-        return sorted(self._users, key=lambda x: x.code)
+        return self._users
 
     def _get_user_code(self):
         """
