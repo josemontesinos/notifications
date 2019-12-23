@@ -157,7 +157,7 @@ A thorough set of unit tests has been developed and can be checked on the "tests
 over the native Python *unittest* package and can be run with the following command:
 
 ````bash
-python -m unitest tests.py
+python -m unittest tests.py
 ````
 
 ### Contact
