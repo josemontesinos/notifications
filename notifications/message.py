@@ -127,6 +127,8 @@ class Message(object):
         :param user: User object that received the message.
         :type user: User
         """
+        if not self.is_sent(user=user):
+            raise ValueError(f'Message "{self}" has not been sent to user {user} so it cannot be marked as received.')
         self._received.add(user)
         logger.debug(f'Message "{self}" marked as received by user {user}.')
 
@@ -146,6 +148,8 @@ class Message(object):
         :param user: User object that read the message
         :type user: User
         """
+        if not self.is_received(user=user):
+            raise ValueError(f'Message "{self}" has not been received by user {user} so it cannot be marked as read.')
         self._read.add(user)
         logger.debug(f'Message "{self}" marked as read by user {user}.')
 

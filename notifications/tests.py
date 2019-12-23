@@ -153,6 +153,7 @@ class MessageTestCase(TestCase):
     def test_mark_message_as_received(self):
         message = Message(body=self.body, code=self.code)
         user = MagicMock()
+        message._sent.add(user)
         self.assertEqual(len(message.users_received), 0)
         self.assertFalse(message.is_received(user=user))
         message.mark_as_received(user=user)
@@ -160,9 +161,23 @@ class MessageTestCase(TestCase):
         self.assertTrue(message.is_received(user=user))
         self.assertIn(user, message.users_received)
 
+    def test_mark_unsent_message_as_received(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        with self.assertRaises(ValueError):
+            message.mark_as_received(user=user)
+
+    def test_mark_not_yet_received_message_as_read(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        with self.assertRaises(ValueError):
+            message.mark_as_read(user=user)
+
     def test_mark_message_as_read(self):
         message = Message(body=self.body, code=self.code)
         user = MagicMock()
+        message._sent.add(user)
+        message._received.add(user)
         self.assertEqual(len(message.users_read), 0)
         self.assertFalse(message.is_read(user=user))
         message.mark_as_read(user=user)
@@ -170,47 +185,27 @@ class MessageTestCase(TestCase):
         self.assertTrue(message.is_read(user=user))
         self.assertIn(user, message.users_read)
 
-    def test_users_sent_property(self):
+    def test_repeated_user(self):
+        message = Message(body=self.body, code=self.code)
+        user = MagicMock()
+        for _ in range(2):
+            message.send(user=user)
+            self.assertEqual(len(message.users_sent), 1)
+            message.mark_as_received(user=user)
+            self.assertEqual(len(message.users_received), 1)
+            message.mark_as_read(user=user)
+            self.assertEqual(len(message.users_read), 1)
+
+    def test_users_properties(self):
         users = get_mocks_with_code()
         message = Message(body=self.body, code=self.code)
         for user in users:
             message.send(user=user)
-        self.assertEqual(message.users_sent, list(users))
-
-    def test_users_received_property(self):
-        users = get_mocks_with_code()
-        message = Message(body=self.body, code=self.code)
-        for user in users:
             message.mark_as_received(user=user)
-        self.assertEqual(message.users_received, list(users))
-
-    def test_users_read_property(self):
-        users = get_mocks_with_code()
-        message = Message(body=self.body, code=self.code)
-        for user in users:
             message.mark_as_read(user=user)
+        self.assertEqual(message.users_sent, list(users))
+        self.assertEqual(message.users_received, list(users))
         self.assertEqual(message.users_read, list(users))
-
-    def test_send_with_repeated_user(self):
-        message = Message(body=self.body, code=self.code)
-        user = MagicMock()
-        message.send(user=user)
-        message.send(user=user)
-        self.assertEqual(len(message.users_sent), 1)
-
-    def test_mark_as_received_with_repeated_user(self):
-        message = Message(body=self.body, code=self.code)
-        user = MagicMock()
-        message.mark_as_received(user=user)
-        message.mark_as_received(user=user)
-        self.assertEqual(len(message.users_received), 1)
-
-    def test_mark_as_read_with_repeated_user(self):
-        message = Message(body=self.body, code=self.code)
-        user = MagicMock()
-        message.mark_as_read(user=user)
-        message.mark_as_read(user=user)
-        self.assertEqual(len(message.users_read), 1)
 
 
 class NamesTestCase(TestCase):
